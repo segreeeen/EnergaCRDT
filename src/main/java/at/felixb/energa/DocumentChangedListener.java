@@ -1,5 +1,5 @@
 package at.felixb.energa;
 
 public interface DocumentChangedListener {
-    void onDocumentChanged();
+    void onDocumentChanged(DocumentChangeEvent event);
 }

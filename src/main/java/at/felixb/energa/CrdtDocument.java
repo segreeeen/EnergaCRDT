@@ -2,6 +2,8 @@ package at.felixb.energa;
 
 import java.util.*;
 
+import static at.felixb.energa.DocumentChangeEvent.*;
+
 public class CrdtDocument implements Document{
 
     private final UUID siteId;
@@ -26,9 +28,6 @@ public class CrdtDocument implements Document{
 
     // #### Public
     public List<CrdtNode> getLinearOrder() {
-        if (linearOrderCache.cacheDirty()) {
-            linearOrderCache.renew();
-        }
         return linearOrderCache.getCacheCopy();
     }
 
@@ -65,6 +64,14 @@ public class CrdtDocument implements Document{
         this.changeListeners.add(listener);
     }
 
+    public List<CrdtNode> traverse() {
+        List<CrdtNode> nodes = new ArrayList<>();
+        for (CrdtNode n : root.getChildren()) {
+            visit(n, nodes);
+        }
+        return nodes;
+    }
+
     // #### Package-Private
 
     Optional<CrdtNode> findNodeByPosition(int position) {
@@ -87,21 +94,16 @@ public class CrdtDocument implements Document{
         return node;
     }
 
-    public List<CrdtNode> traverse() {
-        List<CrdtNode> nodes = new ArrayList<>();
-        for (CrdtNode n : root.getChildren()) {
-            visit(n, nodes);
-        }
-        return nodes;
-    }
-
     int getNextNodeNr() {
         return nodeCounter++;
     }
 
+    CrdtNode getRoot() {
+        return root;
+    }
     // #### Private
 
-    private void onNodeCreated(CrdtNode insertedNode) {
+    private void handlePendingOps(CrdtNode insertedNode) {
         // handle pending insert ops
         handlePendingInsertsFor(insertedNode);
         pendingInsertOps.remove(insertedNode.getNodeId());
@@ -126,16 +128,22 @@ public class CrdtDocument implements Document{
 
                     CrdtNode insertNode = createNewNode(op.getInsertNodeId(), op.getCharacter());
                     parent.addChild(insertNode);
-                    onNodeCreated(insertNode);
-                    fireDocumentChanged();
+                    linearOrderCache.insertNode(insertNode);
+
+                    handlePendingOps(insertNode);
+
+                    fireDocumentChanged(new DocumentChangeEvent(DocumentChangeEventType.INSERT, insertNode));
                 },
                 () -> addPendingInsertOp(op));
     }
 
     private void applyDelete(CrdtDeleteOp op) {
-        Optional.ofNullable(this.indexedNodeAccessMap.get(op.getDeleteNodeId())).ifPresentOrElse(CrdtNode::delete, () -> addPendingDeleteOp(op));
+        Optional.ofNullable(this.indexedNodeAccessMap.get(op.getDeleteNodeId())).ifPresentOrElse(node -> {
+            node.delete();
+            fireDocumentChanged(new DocumentChangeEvent(DocumentChangeEventType.DELETE, node));
+        }, () -> addPendingDeleteOp(op));
 
-        fireDocumentChanged();
+
     }
 
     private void addPendingInsertOp(CrdtInsertOp op) {
@@ -153,9 +161,9 @@ public class CrdtDocument implements Document{
         }
     }
 
-    private void fireDocumentChanged() {
+    private void fireDocumentChanged(DocumentChangeEvent documentChangedEvent) {
         for (DocumentChangedListener listener : changeListeners) {
-            listener.onDocumentChanged();
+            listener.onDocumentChanged(documentChangedEvent);
         }
     }
 }

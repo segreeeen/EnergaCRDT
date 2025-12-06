@@ -8,7 +8,7 @@ public class CrdtNode {
     private final char character;
     private boolean deleted = false;
     private TreeMap<CrdtNodeId, CrdtNode> children = new TreeMap<>(Collections.reverseOrder()); //automatically sorts by ID
-    private int subTreeSize = 0;
+    private int subTreeSize = 1;
     private CrdtNode parent;
 
     //RootNode Constructor
@@ -46,12 +46,7 @@ public class CrdtNode {
     }
 
     public void delete() {
-        if (!deleted) {
-            this.deleted = true;
-            if (parent != null) {
-                parent.decrementSubTreeSize();
-            }
-        }
+        this.deleted = true;
     }
 
     public char getCharacter() {
@@ -82,14 +77,11 @@ public class CrdtNode {
         }
     }
 
-    void decrementSubTreeSize() {
-        this.subTreeSize--;
-        if (parent != null) {
-            parent.decrementSubTreeSize();
-        }
+    public int getSubTreeSize() {
+        return subTreeSize;
     }
 
-    public int getSubTreeSize() {
-        return (isActive() ? 1 : 0) + subTreeSize;
+    public CrdtNode getParent() {
+        return this.parent;
     }
 }
