@@ -1,4 +1,4 @@
-package at.felixb.energa;
+package at.felixb.energa.crdt;
 
 import java.util.List;
 import java.util.UUID;

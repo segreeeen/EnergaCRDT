@@ -1,6 +1,6 @@
 package at.felixb.simplerga;
 
-import at.felixb.energa.*;
+import at.felixb.energa.crdt.*;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;

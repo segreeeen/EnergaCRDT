@@ -1,4 +1,4 @@
-package at.felixb.energa;
+package at.felixb.energa.crdt;
 
 public abstract class CrdtOperation {
     enum OperationType {

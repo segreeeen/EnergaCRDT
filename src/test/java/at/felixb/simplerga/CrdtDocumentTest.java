@@ -1,6 +1,9 @@
 package at.felixb.simplerga;
 
-import at.felixb.energa.*;
+import at.felixb.energa.crdt.CrdtOperation;
+import at.felixb.energa.crdt.Document;
+import at.felixb.energa.crdt.OperationFactory;
+import at.felixb.energa.crdt.UserOperation;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

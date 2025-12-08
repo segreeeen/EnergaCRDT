@@ -1,4 +1,4 @@
-package at.felixb.energa;
+package at.felixb.energa.crdt;
 
 public interface OperationFactory {
     static InsertOp createInsertOp(int position, String text) {

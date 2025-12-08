@@ -1,4 +1,4 @@
-package at.felixb.energa;
+package at.felixb.energa.crdt;
 
 public class CrdtDeleteOp extends CrdtOperation {
     private final CrdtNodeId deleteNodeId;

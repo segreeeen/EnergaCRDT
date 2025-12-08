@@ -1,8 +1,8 @@
-package at.felixb.energa;
+package at.felixb.energa.crdt;
 
 import java.util.*;
 
-import static at.felixb.energa.DocumentChangeEvent.*;
+import static at.felixb.energa.crdt.DocumentChangeEvent.*;
 
 public class CrdtDocument implements Document{
 
@@ -98,7 +98,7 @@ public class CrdtDocument implements Document{
         return nodeCounter++;
     }
 
-    CrdtNode getRoot() {
+    public CrdtNode getRoot() {
         return root;
     }
     // #### Private
