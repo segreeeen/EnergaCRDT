@@ -1,5 +1,6 @@
 package at.felixb.energa.crdt;
 
+
 import java.util.*;
 
 public class CrdtNode {
@@ -10,6 +11,7 @@ public class CrdtNode {
     private TreeMap<CrdtNodeId, CrdtNode> children = new TreeMap<>(Collections.reverseOrder()); //automatically sorts by ID
     private int subTreeSize = 1;
     private CrdtNode parent;
+
 
     //RootNode Constructor
     CrdtNode(UUID siteId, int nodeId) {
@@ -39,14 +41,6 @@ public class CrdtNode {
 
     public boolean isDeleted() {
         return deleted;
-    }
-
-    public boolean isActive() {
-        return !deleted;
-    }
-
-    public void delete() {
-        this.deleted = true;
     }
 
     public char getCharacter() {
@@ -84,4 +78,15 @@ public class CrdtNode {
     public CrdtNode getParent() {
         return this.parent;
     }
+
+    public void delete() {
+        this.deleted = true;
+
+    }
+
+    public boolean isVisible() {
+        return !deleted;
+    }
+
+
 }

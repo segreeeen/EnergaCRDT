@@ -1,6 +1,7 @@
 package at.felixb.energa.crdt;
 
-import at.felixb.energa.btree.BPlusList;
+
+import at.felixb.energa.bpluslist.BPlusList;
 
 import java.util.*;
 import java.util.stream.Stream;
@@ -50,27 +51,78 @@ public class LinearOrderCache {
                 ? 0
                 : cache.indexOf(parent);
 
-        int subTreeSizeSum = parent.getChildren().stream()
-                .filter(child -> child.getNodeId().compareTo(insertNode.getNodeId()) > 0)
-                .mapToInt(CrdtNode::getSubTreeSize)
-                .sum();
+        int prefixSum = 0;
 
-        return parentIndex + (parent == document.getRoot() ? 0 : 1) + subTreeSizeSum;
+        // children sind reverseOrder() -> Iteration: größte IDs zuerst
+        for (CrdtNode child : parent.getChildren()) {
+            int cmp = child.getNodeId().compareTo(insertNode.getNodeId());
+
+            // cmp > 0 => childId ist größer => kommt VOR insertNode in reverseOrder
+            if (cmp > 0) {
+                prefixSum += child.getSubTreeSize();
+            } else {
+                // jetzt sind wir bei <= insertNodeId, danach kommt nur noch kleiner -> kann abbrechen
+                break;
+            }
+        }
+
+        int parentSelfOffset = (parent == document.getRoot()) ? 0 : 1;
+
+        return parentIndex + parentSelfOffset + prefixSum;
     }
+
 
     public int size() {
         return cache.size();
     }
 
-    public CrdtNode get(int i) {
+    /**
+     * Returns Node by Index
+     * @param i
+     * @return
+     */
+    public CrdtNode getIndexOf(int i) {
         return cache.get(i);
+    }
+
+    /**
+     * Returns Index by Node
+     * @param node
+     * @return
+     */
+    public int getIndexOf(CrdtNode node) {
+        return cache.indexOf(node);
     }
 
     public Stream<CrdtNode> stream() {
         return cache.toList().stream();
     }
 
-    public List<CrdtNode> getCacheCopy() {
+    public List<CrdtNode> getCopyWithActiveOnlyNodes() {
+        return cache.toVisibleList();
+    }
+
+    public int visibleSize() {
+        return cache.visibleSize();
+    }
+
+    public boolean isVisible(CrdtNode value) {
+        return cache.isVisible(value);
+    }
+
+    public int indexOfVisible(CrdtNode value) {
+        return cache.indexOfVisible(value);
+    }
+
+    public CrdtNode getVisible(int visibleIndex) {
+        return cache.getVisible(visibleIndex);
+    }
+
+    public List<CrdtNode> getCopyWithDeletedNodes() {
         return cache.toList();
+    }
+
+    public void setVisible(CrdtNode node, boolean newVisible) {
+        cache.setVisible(node, newVisible);
     }
 }

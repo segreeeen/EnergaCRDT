@@ -25,5 +25,11 @@ public interface Document {
 
     UUID getSiteId();
 
+    Anchor createAnchor(int index, Gravity gravity);
+
+    int resolveAnchor(Anchor anchor);
+
+    Range resolveRange(Anchor a, Anchor b);
+
     void registerDocumentChangedListener(DocumentChangedListener listener);
 }

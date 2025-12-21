@@ -16,7 +16,7 @@ public class DeleteOp implements UserOperation<CrdtDeleteOp> {
     public List<CrdtDeleteOp> transformToInternal(Document document) {
         CrdtDocument crdtDocument = (CrdtDocument) document;
         List<CrdtDeleteOp> rgaDeleteOps = new ArrayList<>();
-        List<CrdtNode> nodes = crdtDocument.getLinearOrder().stream().filter(CrdtNode::isActive).toList();
+        List<CrdtNode> nodes = crdtDocument.getLinearOrder().stream().filter(CrdtNode::isVisible).toList();
 
         if (positionStart < 0 || positionStart > nodes.size()) return rgaDeleteOps;
         if (positionEnd < 0 || positionEnd > nodes.size()) return rgaDeleteOps;

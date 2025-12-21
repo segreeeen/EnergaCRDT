@@ -1,11 +1,11 @@
 package at.felixb.simplerga;
 
-import at.felixb.energa.btree.BPlusList;
+
+import at.felixb.energa.bpluslist.BPlusList;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-
 public class BPlusListPerformance {
 
     public static void main(String[] args) {

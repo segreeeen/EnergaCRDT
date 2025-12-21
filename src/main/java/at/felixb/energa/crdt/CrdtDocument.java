@@ -1,10 +1,11 @@
 package at.felixb.energa.crdt;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static at.felixb.energa.crdt.DocumentChangeEvent.*;
 
-public class CrdtDocument implements Document{
+public class CrdtDocument implements Document {
 
     private final UUID siteId;
     private final CrdtNode root;
@@ -28,17 +29,20 @@ public class CrdtDocument implements Document{
 
     // #### Public
     public List<CrdtNode> getLinearOrder() {
-        return linearOrderCache.getCacheCopy();
+        return linearOrderCache.getCopyWithDeletedNodes();
+    }
+
+    public List<CrdtNode> getActiveOnlyLinearOrder() {
+        return linearOrderCache.getCopyWithActiveOnlyNodes();
     }
 
     @Override
     public String render() {
-
-        StringBuilder sb = new StringBuilder();
-
-        getLinearOrder().stream().filter(CrdtNode::isActive).map(CrdtNode::getCharacter).forEach(sb::append);
-
-        return sb.toString();
+        return getActiveOnlyLinearOrder()
+                .stream()
+                .map(CrdtNode::getCharacter)
+                .map(String::valueOf)
+                .collect(Collectors.joining());
     }
 
     @Override
@@ -57,6 +61,132 @@ public class CrdtDocument implements Document{
     @Override
     public UUID getSiteId() {
         return siteId;
+    }
+
+    /**
+     * Returns an Anchor representing the caret at the given gap index.
+     * <p>
+     * The caret index is interpreted as a gap index in the visible linear order
+     * (0 <= caretIndex <= N), where N is the number of visible nodes.
+     * <br/><br/>
+     * If gravity == Left:
+     * <br/>- the anchor attaches to the left neighbor of the caret
+     * <br/>- node = visible node at caretIndex - 1
+     * <br/><br/>
+     * If gravity == Right:
+     * <br/>- the anchor attaches to the right neighbor of the caret
+     * <br/>- node = visible node at caretIndex
+     * <br/><br/>
+     * Edge cases:
+     * <br/>- If caretIndex <= 0, the anchor is clamped to the start:
+     * Anchor(HEAD, Left)
+     * <br/>- If caretIndex >= N, the anchor is clamped to the end:
+     * Anchor(lastVisibleNode, Left)
+     * <br/><br/>
+     * At the document boundaries, gravity is ignored since only one neighbor exists.
+     *
+     * @param caretIndex caret gap index in visible order
+     * @param gravity    requested gravity (left/right)
+     */
+    @Override
+    public Anchor createAnchor(int caretIndex, Gravity gravity) {
+        var active = getActiveOnlyLinearOrder(); // visible nodes only
+        int N = active.size();
+
+        if (N == 0) return new Anchor(root.getNodeId(), Gravity.LEFT);
+
+        // edge cases: first or last possible caret position
+        if (caretIndex <= 0) return new Anchor(root.getNodeId(), Gravity.LEFT);
+        if (caretIndex >= N) return new Anchor(active.get(N - 1).getNodeId(), Gravity.LEFT);
+
+        // normal case: position somewhere in the middle
+        CrdtNodeId id = switch (gravity) {
+            case LEFT -> active.get(caretIndex - 1).getNodeId();
+            case RIGHT -> active.get(caretIndex).getNodeId();
+        };
+
+        return new Anchor(id, gravity);
+    }
+
+    /**
+     * Resolves an Anchor to a caret gap index in the current visible linear order.
+     * <p>
+     * An Anchor represents a caret position by storing a neighboring node and a
+     * gravity indicating which side of that node the caret is attached to.
+     * <p>
+     * Resolution rules:
+     * <br/>
+     * - If the anchor's node is visible:
+     * <br/>- gravity == LEFT  → caret index = indexOf(node) + 1
+     * <br/>- gravity == RIGHT → caret index = indexOf(node)
+     * <p>
+     * - If the anchor's node is not visible (e.g. tombstoned):
+     * <br/>- gravity == LEFT  → search left for the nearest visible node
+     * <br/>- gravity == RIGHT → search right for the nearest visible node
+     * <br/>- apply the same index rules to the found node
+     * <p>
+     * - If no visible node exists in the search direction:
+     * <br/>- resolve to the start (caret index 0) or end (caret index N)
+     * <p>
+     * The returned caret index is always clamped to the valid range [0, N],
+     * where N is the number of visible nodes.
+     *
+     * @param anchor the anchor to resolve
+     * @return the resolved caret gap index
+     */
+    @Override
+    public int resolveAnchor(Anchor anchor) {
+        var node = indexedNodeAccessMap.get(anchor.anchorId());
+        if (node == null) return 0;
+
+
+        //node is visible
+        if (node.isVisible()) {
+            return switch (anchor.gravity()) {
+                case LEFT -> linearOrderCache.indexOfVisible(node) + 1;
+                case RIGHT -> linearOrderCache.indexOfVisible(node);
+            };
+        }
+
+        // node is invisible (i.e. deleted) and we have to resolve the position
+        // first: find the next left/right (depends on gravity) visible node
+        // then find the position of that node in the visible-only linear order
+        int indexNotVisible = linearOrderCache.getIndexOf(node);
+        var linearOrder = linearOrderCache.getCopyWithDeletedNodes();
+        if (indexNotVisible < 0) return 0;
+
+        return switch (anchor.gravity()) {
+            case LEFT -> {
+                // we don't check the node itself twice. start with the node to the left
+                for (int i = indexNotVisible - 1; i >= 0; i--) {
+                    CrdtNode nextNode = linearOrder.get(i);
+                    if (nextNode.isVisible()) {
+                        yield linearOrderCache.indexOfVisible(nextNode) + 1;
+                    }
+                }
+
+                yield 0;
+            }
+            case RIGHT -> {
+                // we don't check the node itself twice. start with the node to the right
+                for (int i = indexNotVisible + 1; i < linearOrder.size(); i++) {
+                    CrdtNode nextNode = linearOrder.get(i);
+                    if (nextNode.isVisible()) {
+                        yield linearOrderCache.indexOfVisible(nextNode);
+                    }
+                }
+
+                yield linearOrderCache.visibleSize();
+            }
+        };
+    }
+
+
+
+
+    @Override
+    public Range resolveRange(Anchor a, Anchor b) {
+        return new Range(resolveAnchor(a), resolveAnchor(b));
     }
 
     @Override
@@ -101,6 +231,7 @@ public class CrdtDocument implements Document{
     public CrdtNode getRoot() {
         return root;
     }
+
     // #### Private
 
     private void handlePendingOps(CrdtNode insertedNode) {
@@ -140,6 +271,9 @@ public class CrdtDocument implements Document{
     private void applyDelete(CrdtDeleteOp op) {
         Optional.ofNullable(this.indexedNodeAccessMap.get(op.getDeleteNodeId())).ifPresentOrElse(node -> {
             node.delete();
+
+            linearOrderCache.setVisible(node, false);
+
             fireDocumentChanged(new DocumentChangeEvent(DocumentChangeEventType.DELETE, node));
         }, () -> addPendingDeleteOp(op));
 

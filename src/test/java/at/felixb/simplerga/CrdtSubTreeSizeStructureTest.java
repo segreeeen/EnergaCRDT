@@ -192,7 +192,7 @@ class CrdtSubTreeSizeStructureTest {
 
         // Eine Node sollte deleted sein, eine aktiv
         long deletedCount = nodesAfter.stream().filter(CrdtNode::isDeleted).count();
-        long activeCount = nodesAfter.stream().filter(CrdtNode::isActive).count();
+        long activeCount = nodesAfter.stream().filter(CrdtNode::isVisible).count();
 
         assertEquals(1L, deletedCount);
         assertEquals(1L, activeCount);
@@ -228,7 +228,7 @@ class CrdtSubTreeSizeStructureTest {
         // Alle 3 Nicht-Root-Nodes existieren noch, aber sind deleted
         assertEquals(3, nodesAfter.size());
         long deletedCount = nodesAfter.stream().filter(CrdtNode::isDeleted).count();
-        long activeCount = nodesAfter.stream().filter(CrdtNode::isActive).count();
+        long activeCount = nodesAfter.stream().filter(CrdtNode::isVisible).count();
 
         assertEquals(3L, deletedCount);
         assertEquals(0L, activeCount);

@@ -1,6 +1,6 @@
 package at.felixb.simplerga;
 
-import at.felixb.energa.btree.BPlusList;
+import at.felixb.energa.bpluslist.BPlusList;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
