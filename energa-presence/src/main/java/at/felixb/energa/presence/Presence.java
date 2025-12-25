@@ -1,15 +1,17 @@
 package at.felixb.energa.presence;
 
-public class Presence {
+import java.util.concurrent.atomic.AtomicLong;
 
+public class Presence {
+    private final AtomicLong seq = new AtomicLong(0);
     private String sessionId;
     private final EphemeralState ephemeralState;
     private final MetaState metaState;
 
     public Presence(String sessionId) {
         this.sessionId = sessionId;
-        this.ephemeralState = new EphemeralState(0L);
-        this.metaState = new MetaState(0L);
+        this.ephemeralState = new EphemeralState();
+        this.metaState = new MetaState();
     }
 
     public String getSessionId() {
@@ -22,5 +24,22 @@ public class Presence {
 
     public MetaState getMetaState() {
         return metaState;
+    }
+
+    public AtomicLong getSeq() {
+        return seq;
+    }
+
+    public boolean updateSeq(Long nextSeq) {
+        if (checkSeq(nextSeq)) {
+            seq.set(nextSeq);
+            return true;
+        }
+
+        return false;
+    }
+
+    public boolean checkSeq(Long nextSeq) {
+        return seq.get() < nextSeq;
     }
 }

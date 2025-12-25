@@ -32,4 +32,6 @@ public interface Document {
     Range resolveRange(Anchor a, Anchor b);
 
     void registerDocumentChangedListener(DocumentChangedListener listener);
+
+    long getRevision();
 }

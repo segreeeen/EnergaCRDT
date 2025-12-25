@@ -1,6 +1,6 @@
 package at.felixb.energa.presence;
 
 public enum Direction {
-    LEFT, // Cursor is left of selection
-    RIGHT // Cursor is right of selection
+    BACKWARD, // Cursor is left of selection
+    FORWARD // Cursor is right of selection
 }

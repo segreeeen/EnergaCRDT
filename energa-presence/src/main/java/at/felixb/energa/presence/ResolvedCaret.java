@@ -1,4 +1,4 @@
 package at.felixb.energa.presence;
 
-public class ResolvedCaret {
+public record ResolvedCaret(int position) implements Resolved {
 }

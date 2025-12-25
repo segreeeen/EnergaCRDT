@@ -1,4 +1,4 @@
 rootProject.name = "energa"
 
-include("energa-core")
-include("energa-presence")
+include(":energa-core")
+include(":energa-presence")

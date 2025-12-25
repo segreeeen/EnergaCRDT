@@ -4,46 +4,29 @@ import at.felixb.energa.crdt.Range;
 
 import java.util.Objects;
 
-public final class ResolvedSelection implements Resolvable {
-    private final Range range;
+public final class ResolvedSelection implements Resolved {
+
+    private final int startIndex;
+    private final int endIndex;
     private final Direction direction;
 
-    public ResolvedSelection(Range range, Direction direction) {
-        this.range = range;
+    public ResolvedSelection(int startIndex, int endIndex, Direction direction) {
+        this.startIndex = startIndex;
+        this.endIndex = endIndex;
         this.direction = direction;
     }
 
     public int getStartIndex() {
-        return range.startIndex();
+        return startIndex;
     }
 
     public int getEndIndex() {
-        return range.endIndex();
+        return endIndex;
     }
 
-    public Direction direction() {
+    public Direction getDirection() {
         return direction;
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == this) return true;
-        if (obj == null || obj.getClass() != this.getClass()) return false;
-        var that = (ResolvedSelection) obj;
-        return Objects.equals(this.range, that.range) &&
-                Objects.equals(this.direction, that.direction);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(range, direction);
-    }
-
-    @Override
-    public String toString() {
-        return "ResolvedSelection[" +
-                "range=" + range + ", " +
-                "direction=" + direction + ']';
-    }
 
 }

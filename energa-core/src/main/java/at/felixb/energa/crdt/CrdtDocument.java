@@ -1,7 +1,6 @@
 package at.felixb.energa.crdt;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static at.felixb.energa.crdt.DocumentChangeEvent.*;
 
@@ -17,6 +16,7 @@ public class CrdtDocument implements Document {
     private final LinearOrderCache linearOrderCache;
 
     private int nodeCounter = 0;
+    private long revision = 0;
 
     CrdtDocument() {
         this.root = new CrdtNode(Document.ROOT_SITE_ID, getNextNodeNr());
@@ -59,6 +59,8 @@ public class CrdtDocument implements Document {
         }
 
         operations.add(operation);
+
+        this.revision++;
     }
 
     @Override
@@ -205,6 +207,15 @@ public class CrdtDocument implements Document {
         return nodes;
     }
 
+    public CrdtNode getRoot() {
+        return root;
+    }
+
+    @Override
+    public long getRevision() {
+        return revision;
+    }
+
     // #### Package-Private
 
     Optional<CrdtNode> findNodeByPosition(int position) {
@@ -229,10 +240,6 @@ public class CrdtDocument implements Document {
 
     int getNextNodeNr() {
         return nodeCounter++;
-    }
-
-    public CrdtNode getRoot() {
-        return root;
     }
 
     // #### Private
@@ -266,7 +273,7 @@ public class CrdtDocument implements Document {
 
                     handlePendingOps(insertNode);
 
-                    fireDocumentChanged(new DocumentChangeEvent(DocumentChangeEventType.INSERT, insertNode));
+                    fireDocumentChanged(new DocumentChangeEvent(DocumentChangeEventType.INSERT));
                 },
                 () -> addPendingInsertOp(op));
     }
@@ -277,7 +284,7 @@ public class CrdtDocument implements Document {
 
             linearOrderCache.setVisible(node, false);
 
-            fireDocumentChanged(new DocumentChangeEvent(DocumentChangeEventType.DELETE, node));
+            fireDocumentChanged(new DocumentChangeEvent(DocumentChangeEventType.DELETE));
         }, () -> addPendingDeleteOp(op));
 
 
